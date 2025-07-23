@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexa AI - Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Base Variables (Light Theme) */
+        :root {
+            --primary-color: #2FB4FF; /* Indigo 500 */
+            --primary-dark-color: #2FB4FF; /* Indigo 600 */
+            --text-color: #374151; /* Gray 700 */
+            --text-light-color: #6B7280; /* Gray 500 */
+            --bg-color: #F3F4F6; /* Gray 100 */
+            --card-bg-color: #FFFFFF;
+            --border-color: #E5E7EB; /* Gray 200 */
+            --sidebar-bg-color: #F9FAFB; /* Gray 50 */
+            --sidebar-item-hover-bg: #E5E7EB; /* Gray 200 */
+            --input-bg-color: #F9FAFB; /* Gray 50 */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --code-bg-color: #EFF6FF; /* Blue 50 */
+            --code-text-color: #1F2937; /* Gray 800 */
+            --user-message-bg: #E0E7FF; /* Indigo 100 */
+            --ai-message-bg: #FFFFFF;
+            --success-color: #10B981; /* Emerald 500 */
+            --warning-color: #F59E0B; /* Amber 500 */
+            --error-color: #EF4444; /* Red 500 */
+        }
+
+        /* Dark Theme Variables */
+        body.dark-theme {
+            --primary-color: #2FB4FF; /* Indigo 400 */
+            --primary-dark-color: #2FB4FF; /* Indigo 500 */
+            --text-color: #D1D5DB; /* Gray 300 */
+            --text-light-color: #9CA3AF; /* Gray 400 */
+            --bg-color: #1F2937; /* Gray 800 */
+            --card-bg-color: #374151; /* Gray 700 */
+            --border-color: #4B5563; /* Gray 600 */
+            --sidebar-bg-color: #2F3746; /* Slightly lighter than main bg */
+            --sidebar-item-hover-bg: #4B5563; /* Gray 600 */
+            --input-bg-color: #2F3746; /* Gray 700 slightly darker */
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --code-bg-color: #4B5563; /* Gray 600 */
+            --code-text-color: #E5E7EB; /* Gray 200 */
+            --user-message-bg: #2FB4FF; /* Indigo 600 */
+            --ai-message-bg: #374151; /* Gray 700 */
+        }
+
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar-bg-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, padding 0.3s ease-in-out, border-right 0.3s ease-in-out;
+            flex-shrink: 0; /* Prevent shrinking when content overflows */
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+            width: 0;
+            padding: 0;
+            border-right: none;
+            overflow: hidden; /* Hide content when collapsed */
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-header h3 {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .sidebar-toggle-btn {
+            background: none;
+            border: none;
+            color: var(--text-light-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background-color: var(--sidebar-item-hover-bg);
+            color: var(--text-color);
+        }
+
+        .new-chat-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.8rem 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .new-chat-btn:hover {
+            background-color: var(--primary-dark-color);
+            transform: translateY(-2px);
+        }
+
+        .chat-search {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .chat-search input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem; /* Left padding for icon */
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chat-search input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .chat-search .fa-search {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light-color);
+        }
+
+        .chat-history-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem; /* For scrollbar */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--primary-color) var(--sidebar-bg-color); /* Firefox */
+        }
+
+        .chat-history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-history-list::-webkit-scrollbar-track {
+            background: var(--sidebar-bg-color);
+            border-radius: 10px;
+        }
+
+        .chat-history-list::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 10px;
+            border: 2px solid var(--sidebar-bg-color);
+        }
+
+        .chat-history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-history-item:hover {
+            background-color: var(--sidebar-item-hover-bg);
+        }
+
+        .chat-history-item.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .chat-history-item.active .chat-title,
+        .chat-history-item.active .chat-actions i {
+            color: white;
+        }
+
+        .chat-title {
+            flex-grow: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            transition: color 0.2s ease;
+        }
+        .chat-history-item.active .chat-title {
+            color: white;
+        }
+
+        .chat-actions {
+            display: none; /* Hidden by default, shown on hover/active */
+            gap: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        .chat-history-item:hover .chat-actions,
+        .chat-history-item.active .chat-actions {
+            display: flex;
+        }
+        
+        .chat-actions i {
+            font-size: 0.85rem;
+            color: var(--text-light-color);
+            cursor: pointer;
+            padding: 0.3rem;
+            border-radius: 0.3rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .chat-actions i:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        .chat-history-item.active .chat-actions i:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-color: var(--bg-color); /* Matches chat background */
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--card-bg-color); /* Match main content bg */
+            box-shadow: 0 2px 4px var(--shadow-color);
+            flex-shrink: 0; /* Prevent shrinking */
+            z-index: 10; /* Ensure it's above other content */
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .navbar-left .nexa-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        /* New: Sidebar Open Button for when sidebar is hidden */
+        .navbar-left .sidebar-open-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: none; /* Hidden by default, shown by JS when sidebar is hidden */
+        }
+        .navbar-left .sidebar-open-btn:hover {
+            background-color: var(--sidebar-item-hover-bg);
+            color: var(--text-color);
+        }
+        /* End New */
+
+        .user-profile {
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-avatar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%; /* Position below avatar */
+            right: 0;
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            box-shadow: 0 8px 16px var(--shadow-color);
+            width: 200px;
+            z-index: 100;
+            padding: 0.5rem 0;
+            transform: translateY(10px); /* Small offset */
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s ease-out;
+        }
+
+        .profile-dropdown.show {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--sidebar-item-hover-bg);
+        }
+
+        .dropdown-item i {
+            color: var(--text-light-color);
+        }
+        
+        .dropdown-item.email-display {
+            font-weight: 500;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        .dropdown-item.email-display:hover {
+            background-color: transparent;
+            cursor: default;
+        }
+
+        .theme-toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0.5rem 1rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-color);
+            transition: .4s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(18px);
+        }
+
+        /* Chat Messages Area */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-color: var(--bg-color); /* Main chat background */
+            scroll-behavior: smooth;
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--primary-color) var(--bg-color); /* Firefox */
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 10px;
+            border: 2px solid var(--bg-color);
+        }
+
+        /* Welcome Message Styling */
+        .welcome-message-container {
+            text-align: center;
+            margin-top: auto; /* Push to center vertically if content is short */
+            margin-bottom: auto;
+            padding: 2rem;
+        }
+        .welcome-message-container h1 {
+            font-size: 2.8rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .welcome-message-container h2 {
+            font-size: 1.8rem;
+            color: var(--text-color);
+        }
+
+        .message-container {
+            display: flex;
+            align-items: flex-start; /* Align avatar and bubble to the top */
+            gap: 1rem; /* Spacing between avatar and bubble */
+        }
+
+        /* User Message specific styling */
+        .message-container.user-message {
+            justify-content: flex-end; /* Push content to the right */
+            /* Removed flex-direction: row-reverse; */
+            /* Removed margin-left on message-bubble, as avatar is gone */
+        }
+        .user-message .message-avatar {
+            display: none; /* Hide user avatar */
+        }
+
+
+        /* AI Message specific styling */
+        .message-container.ai-message {
+            justify-content: flex-start; /* Keep content to the left */
+        }
+
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-message .message-avatar {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .ai-message .message-avatar {
+            background-color: #6B7280; /* Gray 500 for AI */
+            color: white;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 1rem 1.25rem;
+            border-radius: 1.25rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .user-message .message-bubble {
+            background-color: var(--user-message-bg);
+            color: var(--text-color);
+            border-bottom-right-radius: 0.5rem; /* Pointy corner */
+        }
+
+        .ai-message .message-bubble {
+            background-color: var(--ai-message-bg);
+            color: var(--text-color);
+            border-bottom-left-radius: 0.5rem; /* Pointy corner */
+        }
+
+        .message-bubble p {
+            margin-bottom: 0.5rem;
+        }
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Code Block Styling */
+        .message-bubble pre {
+            background-color: var(--code-bg-color);
+            color: var(--code-text-color);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            position: relative; /* For copy button */
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            tab-size: 4; /* Standard tab size */
+        }
+        
+        .message-bubble pre code {
+            font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+            display: block; /* Ensures code block takes full width */
+        }
+
+        .code-copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.3);
+            color: white;
+            border: none;
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .message-bubble pre:hover .code-copy-btn {
+            opacity: 1;
+        }
+
+        .code-copy-btn.copied {
+            background-color: var(--success-color);
+        }
+
+        .chat-input-area {
+            position: relative;
+            padding: 1.5rem;
+    
+            background-color:transparent; /* Match main content bg */
+            padding-left:280px; /* Space for sidebar */
+           
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100px; /* Fixed height for input area */
+        }
+
+        .chat-input-main-box {
+            position: relative;
+            display: flex;
+            align-items: flex-end; /* Align items to the bottom within the box */
+            width: 100%;
+            max-width: 700px; /* Limit width */
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem; /* Rounded edges for the main box */
+            background-color: var(--input-bg-color);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            min-height: 60px; /* Increased default height */
+            padding: 0.75rem 0; /* Vertical padding, horizontal padding handled by textarea */
+        }
+
+        .chat-input-main-box:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .chat-input-main-box textarea {
+            flex-grow: 1;
+            min-height: 45px; /* Adjust textarea min-height within the box */
+            max-height: 150px; /* Limit height and allow scroll */
+            padding: 0.25rem 1.5rem; /* Inner padding for text */
+            border: none; /* No border for textarea itself */
+            background-color: transparent; /* Transparent background */
+            color: var(--text-color);
+            font-size: 1rem;
+            resize: none; /* Disable manual resize */
+            outline: none;
+            overflow-y: auto; /* Enable scroll if content overflows */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--primary-color) var(--input-bg-color); /* Firefox */
+            /* Adjusted padding to give space for icons */
+            padding-left: 1.5rem; /* Space for file-attach + mic */
+            padding-right: 4rem; /* Space for send button */
+        }
+
+        .chat-input-main-box textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-input-main-box textarea::-webkit-scrollbar-track {
+            background: var(--input-bg-color);
+            border-radius: 10px;
+        }
+
+        .chat-input-main-box textarea::-webkit-scrollbar-thumb {
+            background-color: var(--primary-color);
+            border-radius: 10px;
+            border: 2px solid var(--input-bg-color);
+        }
+
+        .input-icon {
+            position: absolute;
+            bottom: 50%; /* Center vertically within the input box */
+            transform: translateY(50%); /* Adjust for vertical centering */
+            font-size: 1.2rem;
+            color: var(--text-light-color);
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 0.5rem; /* Make clickable area larger */
+            border-radius: 50%; /* Rounded background for icons */
+        }
+
+        .input-icon:hover {
+            color: #2fb4ff;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .file-attach-icon {
+            right:6.0rem;
+        }
+
+        .mic-icon {
+            right: 4.2rem; /* Position next to file-attach icon */
+        }
+        
+        .send-btn {
+            position: absolute; /* Position inside the main input box */
+            right: 0.75rem;
+            bottom: 50%;
+            transform: translateY(50%);
+            width: 40px; /* Smaller button inside */
+            height: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            border-radius: 50%;
+            background-color: #2fb4ff;
+            color: white;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease, border-radius 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        .send-btn:hover {
+            background-color: #2fb4ff;
+            transform: translateY(calc(50% - 2px)); /* Adjust transform for hover effect */
+        }
+
+        .send-btn.stop-icon {
+            border-radius: 0.5rem; /* Slightly smaller square for stop */
+            font-size: 0.9rem; /* Smaller icon for stop */
+            transform: translateY(50%); /* Maintain vertical center */
+        }
+
+        /* File Preview Area - REMOVED from HTML, but CSS kept in case it's needed later */
+        .file-preview-container {
+            display: none; /* Always hidden now */
+            align-items: center;
+            gap: 10px;
+            padding: 5px 10px;
+            background-color: var(--input-bg-color); /* Match input background */
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 800px;
+            justify-content: flex-start; /* Align content to the left */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
+        }
+        .file-preview-container img {
+            max-width: 50px;
+            max-height: 50px;
+            border-radius: 0.5rem;
+            object-fit: cover;
+        }
+        .file-preview-container span {
+            font-size: 0.9rem;
+            color: var(--text-color);
+            flex-grow: 1; /* Allow filename to take space */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-preview-container .remove-file-btn {
+            background: none;
+            border: none;
+            color: var(--error-color);
+            cursor: pointer;
+            font-size: 1rem;
+            margin-left: auto; /* Push to the right */
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+        .file-preview-container .remove-file-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg-color);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-light-color);
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--text-color);
+        }
+
+        .modal-form .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .modal-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .modal-form input[type="text"],
+        .modal-form input[type="email"],
+        .modal-form input[type="password"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .modal-form input[type="text"]:focus,
+        .modal-form input[type="email"]:focus,
+        .modal-form input[type="password"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .modal-form .btn-primary {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .modal-form .btn-primary:hover {
+            background-color: var(--primary-dark-color);
+            transform: translateY(-2px);
+        }
+
+        .password-strength-modal {
+            height: 0.4rem;
+            border-radius: 0.2rem;
+            background-color: var(--border-color);
+            margin-top: 0.3rem;
+            overflow: hidden;
+        }
+        .strength-bar-modal {
+            height: 100%;
+            width: 0%;
+            background-color: transparent;
+            transition: width 0.3s ease-in-out, background-color 0.3s ease-in-out;
+        }
+        .strength-bar-modal.weak {
+            width: 33%;
+            background-color: var(--error-color);
+        }
+        .strength-bar-modal.medium {
+            width: 66%;
+            background-color: var(--warning-color);
+        }
+        .strength-bar-modal.strong {
+            width: 100%;
+            background-color: var(--success-color);
+        }
+
+        .modal-message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        .modal-message.success {
+            background-color: rgba(16, 185, 129, 0.1); /* Emerald 500 with opacity */
+            color: var(--success-color);
+        }
+        .modal-message.error {
+            background-color: rgba(239, 68, 68, 0.1); /* Red 500 with opacity */
+            color: var(--error-color);
+        }
+
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 999; /* Ensure sidebar is on top when open */
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+                transform: translateX(-100%); /* Start hidden */
+            }
+            .sidebar.show {
+                transform: translateX(0); /* Slide in */
+            }
+            .sidebar.hidden {
+                transform: translateX(-100%);
+                width: 280px; /* Keep width for smooth transition when hidden on mobile */
+                padding: 1.5rem; /* Retain padding for smooth transition */
+                border-right: 1px solid var(--border-color); /* Retain border for smooth transition */
+            }
+
+            /* Show open sidebar button when sidebar is hidden */
+            .navbar-left .sidebar-open-btn {
+                display: block; /* Always visible on mobile to open sidebar */
+            }
+            /* Hide close sidebar button initially on mobile */
+            .sidebar-toggle-btn {
+                display: none;
+            }
+            /* Show close sidebar button when sidebar is open */
+            .sidebar.show .sidebar-toggle-btn {
+                display: block;
+            }
+            /* Hide open sidebar button when sidebar is open */
+            .sidebar.show + .main-content .navbar-left .sidebar-open-btn {
+                display: none;
+            }
+
+            .chat-messages {
+                padding: 1rem;
+            }
+            .chat-input-area {
+                padding: 1rem;
+            }
+            .message-bubble {
+                max-width: 85%; /* Allow bubbles to take more width on small screens */
+                padding: 0.8rem 1rem;
+            }
+            .modal-content {
+                margin: 0 1rem; /* Add horizontal margin on small screens */
+            }
+
+            /* Mobile input area adjustments */
+            .chat-input-area {
+                align-items: center; /* Center items for stacked layout */
+            }
+            .chat-input-main-box {
+                min-height: 50px; /* Adjust for mobile */
+            }
+            .chat-input-main-box textarea {
+                font-size: 0.9rem;
+                min-height: 35px;
+                /* Adjust padding for mobile icons */
+                padding-left: 5rem; /* For both icons */
+                padding-right: 3.5rem; /* For send button */
+            }
+            .input-icon {
+                font-size: 1rem;
+            }
+            .file-attach-icon {
+                left: 0.6rem;
+            }
+            .mic-icon {
+                left: 2.8rem; /* Position next to file-attach icon */
+            }
+            .send-btn {
+                width: 35px;
+                height: 35px;
+                min-width: 35px;
+                min-height: 35px;
+                font-size: 1rem;
+                right: 0.6rem;
+            }
+            .send-btn.stop-icon {
+                border-radius: 0.5rem;
+                font-size: 0.8rem;
+            }
+            .file-preview-container {
+                padding: 5px 8px; /* Reduce padding */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 0.8rem 1rem;
+            }
+            .navbar-left .nexa-logo {
+                font-size: 1.3rem;
+            }
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 1rem;
+            }
+            .chat-input-area {
+                padding: 0.8rem;
+            }
+            .welcome-message-container h1 {
+                font-size: 2rem;
+            }
+            .welcome-message-container h2 {
+                font-size: 1.4rem;
+            }
+        }
+    </style>
+</head>
+<body class="light-theme">
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h3 style="color: black;">Chat History</h3>
+                <!-- Changed to block display for mobile responsiveness -->
+                <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" aria-label="Close Sidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <button class="new-chat-btn" id="new-chat-btn">
+                <i class="fas fa-plus"></i> New Chat
+            </button>
+            <div class="chat-search">
+                <input type="text" id="chat-search-input" placeholder="Search chats...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="chat-history-list" id="chat-history-list">
+                <!-- Chat history items will be loaded here by JavaScript -->
+                <div class="chat-history-item active" data-chat-id="new-chat-placeholder">
+                    <span class="chat-title">New Chat</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Navbar -->
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <!-- Sidebar Open Button (Hamburger Icon) - initially hidden on desktop, shown by JS when sidebar is closed on mobile -->
+                    <button id="sidebar-open-btn" class="sidebar-open-btn" aria-label="Open Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <span class="nexa-logo"><img src="{{ url_for('static', filename='logo.png') }}" alt="Nexa AI Logo" style="width: 130px; height: auto;"></span>
+                    
+                </div>
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-avatar">
+                        <span id="avatar-letter"></span>
+                    </div>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="dropdown-item email-display" id="profile-email-display">user@example.com</div>
+                        <div class="dropdown-item">
+                            <i class="fas fa-moon"></i> Dark Theme
+                            <label class="switch">
+                                <input type="checkbox" id="theme-toggle">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="dropdown-item" id="my-profile-link">
+                            <i class="fas fa-user-circle"></i> My Profile
+                        </div>
+                        <div class="dropdown-item" id="logout-link">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Chat Messages Display -->
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome message on new chat -->
+                <div class="welcome-message-container" id="welcome-message-container">
+                    <h1 id="welcome-username">Hello {{ user.username }}!</h1>
+                    <h2>How can I help you today?</h2>
+                </div>
+            </div>
+
+            <!-- Message Input Area -->
+            <div class="chat-input-area">
+                <div class="chat-input-main-box">
+                    <!-- Hidden file input triggered by icon -->
+                    <input type="file" id="file-attach-input" style="display: none;" accept="image/*, .pdf, .doc, .docx, .txt">
+                    <i class="fas fa-paperclip input-icon file-attach-icon" id="file-attach-btn"></i>
+                    
+                    <i class="fas fa-microphone input-icon mic-icon" id="mic-btn"></i>
+                    
+                    <textarea id="message-input" placeholder="Type your message..." rows="1"></textarea>
+                    
+                    <button id="send-btn" class="send-btn" aria-label="Send Message">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                </div>
+                <!-- File preview container moved and made display:none; -->
+                <!-- The JS will ensure it is never shown here directly, as it's been removed from the request -->
+                <div id="file-preview-container" class="file-preview-container" style="display: none;">
+                    <!-- File preview will go here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- My Profile Modal -->
+    <div id="profile-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>My Profile</h3>
+                <button class="modal-close-btn" data-modal-id="profile-modal-overlay"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="profile-form" class="modal-form">
+                <div id="profile-modal-message" class="modal-message" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="modal-username">Username</label>
+                    <input type="text" id="modal-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="modal-email">Email</label>
+                    <input type="email" id="modal-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="modal-password">New Password (leave blank to keep current)</label>
+                    <input type="password" id="modal-password" name="password" autocomplete="new-password">
+                    <div class="password-strength-modal">
+                        <div id="strength-bar-modal" class="strength-bar-modal"></div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rename Chat Modal -->
+    <div id="rename-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Rename Chat</h3>
+                <button class="modal-close-btn" data-modal-id="rename-modal-overlay"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="rename-form" class="modal-form">
+                <div id="rename-modal-message" class="modal-message" style="display: none;"></div>
+                <div class="form-group">
+                    <label for="modal-chat-title">New Chat Title</label>
+                    <input type="text" id="modal-chat-title" name="chat-title" required>
+                </div>
+                <button type="submit" class="btn-primary">Rename</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn'); // Close button
+            const sidebarOpenBtn = document.getElementById('sidebar-open-btn');   // Open button
+            const newChatBtn = document.getElementById('new-chat-btn');
+            const chatHistoryList = document.getElementById('chat-history-list');
+            const chatSearchInput = document.getElementById('chat-search-input');
+            const userAvatar = document.getElementById('user-avatar');
+            const avatarLetter = document.getElementById('avatar-letter');
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const profileEmailDisplay = document.getElementById('profile-email-display');
+            const themeToggle = document.getElementById('theme-toggle');
+            const myProfileLink = document.getElementById('my-profile-link');
+            const logoutLink = document.getElementById('logout-link');
+            const chatMessages = document.getElementById('chat-messages');
+            const messageInput = document.getElementById('message-input');
+            const sendBtn = document.getElementById('send-btn');
+            const welcomeMessageContainer = document.getElementById('welcome-message-container');
+
+            // Input Area elements
+            const fileAttachBtn = document.getElementById('file-attach-btn');
+            const fileAttachInput = document.getElementById('file-attach-input');
+            const micBtn = document.getElementById('mic-btn');
+            const filePreviewContainer = document.getElementById('file-preview-container'); // This is now always hidden by CSS
+
+            // Modals
+            const profileModalOverlay = document.getElementById('profile-modal-overlay');
+            const profileModalMessage = document.getElementById('profile-modal-message');
+            const profileForm = document.getElementById('profile-form');
+            const modalUsernameInput = document.getElementById('modal-username');
+            const modalEmailInput = document.getElementById('modal-email');
+            const modalPasswordInput = document.getElementById('modal-password');
+            const strengthBarModal = document.getElementById('strength-bar-modal');
+
+            const renameModalOverlay = document.getElementById('rename-modal-overlay');
+            const renameModalMessage = document.getElementById('rename-modal-message');
+            const renameForm = document.getElementById('rename-form');
+            const modalChatTitleInput = document.getElementById('modal-chat-title');
+
+            let currentChatId = 'new-chat-placeholder'; // Default for new chat
+            let activeMessages = []; // Messages for the currently active chat
+            let isGenerating = false; // Flag to prevent multiple concurrent requests
+            let recognition; // For Web Speech API
+
+            // --- Theme Management ---
+            const applyTheme = (theme) => {
+                document.body.classList.remove('light-theme', 'dark-theme');
+                document.body.classList.add(theme);
+                localStorage.setItem('theme', theme);
+                themeToggle.checked = (theme === 'dark');
+            };
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+            themeToggle.addEventListener('change', () => {
+                applyTheme(themeToggle.checked ? 'dark' : 'light');
+            });
+
+            // --- Sidebar Toggle ---
+            const updateSidebarVisibility = () => {
+                const isHidden = sidebar.classList.contains('hidden');
+                sidebarToggleBtn.style.display = isHidden ? 'none' : 'block';
+                sidebarOpenBtn.style.display = isHidden ? 'block' : 'none';
+            };
+
+            sidebarToggleBtn.addEventListener('click', () => {
+                sidebar.classList.add('hidden');
+                sidebar.classList.remove('show');
+                updateSidebarVisibility();
+            });
+
+            sidebarOpenBtn.addEventListener('click', () => {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('show');
+                updateSidebarVisibility();
+            });
+
+            // --- User Profile Dropdown ---
+            userAvatar.addEventListener('click', () => {
+                profileDropdown.classList.toggle('show');
+            });
+
+            // Close dropdown if clicked outside
+            document.addEventListener('click', (event) => {
+                if (!userAvatar.contains(event.target) && !profileDropdown.contains(event.target)) {
+                    profileDropdown.classList.remove('show');
+                }
+            });
+
+            // --- Fetch User Details & Initial Chat History ---
+            const fetchUserDetails = async () => {
+                try {
+                    const response = await fetch('/api/user_profile');
+                    if (response.ok) {
+                        const userData = await response.json();
+                        // Get username from Flask context if available, otherwise from fetched data
+                        const username = "{{ user.username if user else '' }}" || userData.username;
+                        avatarLetter.textContent = username ? username.charAt(0).toUpperCase() : '?';
+                        profileEmailDisplay.textContent = userData.email || 'N/A';
+                        modalUsernameInput.value = userData.username || '';
+                        modalEmailInput.value = userData.email || '';
+                        // Update welcome message with actual username
+                        document.getElementById('welcome-username').textContent = `Hello ${username}!`;
+                    } else {
+                        console.error('Failed to fetch user details');
+                        // Handle error, maybe redirect to login if session expired
+                    }
+                } catch (error) {
+                    console.error('Error fetching user details:', error);
+                }
+            };
+
+            const fetchChatHistory = async () => {
+                try {
+                    const response = await fetch('/api/chat_history');
+                    if (response.ok) {
+                        const chats = await response.json();
+                        renderChatHistory(chats);
+                        // If no chats or 'new-chat-placeholder' active, show welcome message
+                        if (chats.length === 0 || currentChatId === 'new-chat-placeholder') {
+                            startNewChat(); // Will display welcome message
+                        } else {
+                            // Automatically load the latest chat if available and not explicitly on a new chat
+                            const latestChatId = chats[0].chat_id;
+                            loadChat(latestChatId);
+                        }
+                    } else {
+                        console.error('Failed to fetch chat history');
+                        renderChatHistory([]); // Clear history if fetch fails
+                        startNewChat(); // Fallback to welcome message
+                    }
+                } catch (error) {
+                    console.error('Error fetching chat history:', error);
+                    startNewChat(); // Fallback to welcome message
+                }
+            };
+
+            // --- Render Chat History in Sidebar ---
+            const renderChatHistory = (chats) => {
+                chatHistoryList.innerHTML = ''; // Clear existing list
+                
+                // Add "New Chat" button always at the top
+                const newChatPlaceholder = document.createElement('div');
+                newChatPlaceholder.className = `chat-history-item ${currentChatId === 'new-chat-placeholder' ? 'active' : ''}`;
+                newChatPlaceholder.dataset.chatId = 'new-chat-placeholder';
+                newChatPlaceholder.innerHTML = `<span class="chat-title">New Chat</span>`;
+                newChatPlaceholder.addEventListener('click', () => startNewChat());
+                chatHistoryList.appendChild(newChatPlaceholder);
+
+                // Sort chats by timestamp (newest first)
+                chats.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+                chats.forEach(chat => {
+                    const chatItem = document.createElement('div');
+                    chatItem.className = `chat-history-item ${currentChatId === chat.chat_id ? 'active' : ''}`;
+                    chatItem.dataset.chatId = chat.chat_id;
+                    chatItem.innerHTML = `
+                        <span class="chat-title">${chat.title}</span>
+                        <div class="chat-actions">
+                            <i class="fa-solid fa-pen-to-square rename-chat-icon" title="Rename"></i>
+                            <i class="fa-solid fa-trash delete-chat-icon" title="Delete"></i>
+                        </div>
+                    `;
+                    chatItem.addEventListener('click', (e) => {
+                        // Prevent loading chat if click is on action icon
+                        if (!e.target.closest('.chat-actions i')) {
+                            loadChat(chat.chat_id);
+                        }
+                    });
+                    chatHistoryList.appendChild(chatItem);
+                });
+
+                // Add event listeners for rename/delete after rendering
+                attachChatActionListeners();
+            };
+
+            const attachChatActionListeners = () => {
+                document.querySelectorAll('.rename-chat-icon').forEach(icon => {
+                    icon.onclick = (e) => {
+                        e.stopPropagation(); // Prevent loading chat
+                        const chatId = e.target.closest('.chat-history-item').dataset.chatId;
+                        const currentTitle = e.target.closest('.chat-history-item').querySelector('.chat-title').textContent;
+                        openRenameModal(chatId, currentTitle);
+                    };
+                });
+
+                document.querySelectorAll('.delete-chat-icon').forEach(icon => {
+                    icon.onclick = (e) => {
+                        e.stopPropagation(); // Prevent loading chat
+                        const chatId = e.target.closest('.chat-history-item').dataset.chatId;
+                        showConfirmationModal('Are you sure you want to delete this chat?', () => deleteChat(chatId));
+                    };
+                });
+            };
+
+            const startNewChat = () => {
+                currentChatId = 'new-chat-placeholder'; // Unique ID for temporary new chat
+                activeMessages = []; // Clear messages for new chat
+                displayMessages(); // Clear messages, then show welcome
+
+                // Show welcome message
+                welcomeMessageContainer.style.display = 'block';
+
+                updateActiveChatInSidebar('new-chat-placeholder');
+                profileDropdown.classList.remove('show'); // Close dropdown
+                if (window.innerWidth <= 768) { // For mobile, hide sidebar on new chat
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('show');
+                    updateSidebarVisibility(); // Update button visibility
+                }
+            };
+
+            newChatBtn.addEventListener('click', startNewChat);
+
+            const loadChat = async (chatId) => {
+                if (chatId === currentChatId) return; // Already loaded
+
+                try {
+                    const response = await fetch(`/api/chat_history/${chatId}`);
+                    if (response.ok) {
+                        const chatData = await response.json();
+                        currentChatId = chatData.chat_id;
+                        activeMessages = chatData.messages;
+                        displayMessages();
+                        updateActiveChatInSidebar(chatId);
+                        // Hide welcome message if a chat is loaded
+                        welcomeMessageContainer.style.display = 'none';
+                    } else {
+                        console.error('Failed to load chat:', chatId);
+                        showInfoModal('Failed to load chat. It might have been deleted or an error occurred.', () => startNewChat()); // Fallback to new chat
+                    }
+                } catch (error) {
+                    console.error('Error loading chat:', error);
+                    showInfoModal('Error loading chat. Please try again.', () => startNewChat()); // Fallback to new chat
+                } finally {
+                    profileDropdown.classList.remove('show'); // Close dropdown
+                    if (window.innerWidth <= 768) { // For mobile, hide sidebar after selecting chat
+                        sidebar.classList.add('hidden');
+                        sidebar.classList.remove('show');
+                        updateSidebarVisibility(); // Update button visibility
+                    }
+                }
+            };
+
+            const updateActiveChatInSidebar = (chatId) => {
+                document.querySelectorAll('.chat-history-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.dataset.chatId === chatId) {
+                        item.classList.add('active');
+                    }
+                });
+            };
+
+            // --- Display Messages in Chat Area ---
+            const displayMessages = () => {
+                chatMessages.innerHTML = ''; // Clear current messages
+                if (activeMessages.length === 0) {
+                    // Re-append the welcome message if starting a truly empty new chat
+                    const welcomeClone = welcomeMessageContainer.cloneNode(true);
+                    welcomeClone.style.display = 'block'; // Ensure it's visible
+                    chatMessages.appendChild(welcomeClone);
+                } else {
+                    // Hide welcome message if there are actual messages
+                    welcomeMessageContainer.style.display = 'none'; 
+                    activeMessages.forEach(msg => {
+                        addMessageToChat(msg.role, msg.content, false); // Don't scroll on initial load
+                    });
+                }
+                chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+            };
+
+            const addMessageToChat = (role, content, shouldScroll = true) => {
+                // If there's a welcome message, hide it when the first actual message comes in
+                if (welcomeMessageContainer && welcomeMessageContainer.style.display !== 'none') {
+                    welcomeMessageContainer.style.display = 'none';
+                }
+
+                const messageContainer = document.createElement('div');
+                messageContainer.classList.add('message-container', `${role}-message`);
+
+                // Avatar for AI messages only
+                if (role === 'ai') {
+                    const avatar = document.createElement('div');
+                    avatar.classList.add('message-avatar');
+                    avatar.textContent = 'AI';
+                    messageContainer.appendChild(avatar);
+                }
+                // User avatar is no longer displayed for user messages
+
+                const bubble = document.createElement('div');
+                bubble.classList.add('message-bubble');
+
+                // Split content by code blocks to format them correctly
+                const parts = content.split(/(```[\s\S]*?```)/g); // Regex to find code blocks
+                parts.forEach(part => {
+                    if (part.startsWith('```') && part.endsWith('```')) {
+                        const codeBlock = document.createElement('pre');
+                        const codeContent = document.createElement('code');
+                        
+                        // Extract language if specified (e.g., ```python\ncode```)
+                        const languageMatch = part.match(/^```(\w+)\n([\s\S]*?)```$/);
+                        let actualCode = part.substring(3, part.length - 3); // Remove triple backticks
+                        let language = '';
+
+                        if (languageMatch) {
+                            language = languageMatch[1];
+                            actualCode = languageMatch[2];
+                            codeBlock.classList.add(`language-${language}`); // For potential future syntax highlighting library
+                        }
+
+                        codeContent.textContent = actualCode.trim();
+                        codeBlock.appendChild(codeContent);
+
+                        // Add copy button
+                        const copyBtn = document.createElement('button');
+                        copyBtn.classList.add('code-copy-btn');
+                        copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                        copyBtn.addEventListener('click', () => {
+                            copyToClipboard(actualCode.trim(), copyBtn);
+                        });
+                        codeBlock.appendChild(copyBtn);
+
+                        bubble.appendChild(codeBlock);
+                    } else {
+                        const paragraph = document.createElement('p');
+                        // Replace newlines with <br> for plain text
+                        paragraph.innerHTML = part.replace(/\n/g, '<br>');
+                        bubble.appendChild(paragraph);
+                    }
+                });
+
+                messageContainer.appendChild(bubble); // Append bubble after avatar if AI, otherwise directly
+                chatMessages.appendChild(messageContainer);
+
+                if (shouldScroll) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to new message
+                }
+            };
+
+            // --- Copy to Clipboard Function ---
+            const copyToClipboard = (text, button) => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        button.textContent = 'Copied!';
+                        button.classList.add('copied');
+                        setTimeout(() => {
+                            button.textContent = 'Copy';
+                            button.classList.remove('copied');
+                            button.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                        }, 2000);
+                    } else {
+                        console.error('Fallback: Unable to copy');
+                        // Using custom modal instead of alert
+                        showInfoModal('Copying not supported or failed. Please copy manually.');
+                    }
+                } catch (err) {
+                    console.error('Fallback: Oops, unable to copy', err);
+                    // Using custom modal instead of alert
+                    showInfoModal('Copying not supported or failed. Please copy manually.');
+                } finally {
+                    document.body.removeChild(textArea);
+                }
+            };
+
+            // --- Message Input and Send ---
+            messageInput.addEventListener('input', () => {
+                // Auto-resize textarea
+                messageInput.style.height = 'auto';
+                messageInput.style.height = messageInput.scrollHeight + 'px';
+            });
+
+            messageInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault(); // Prevent new line
+                    if (!isGenerating) { // Only send if not currently generating
+                        sendMessage();
+                    }
+                }
+            });
+
+            sendBtn.addEventListener('click', () => {
+                if (!isGenerating) {
+                    sendMessage();
+                } else {
+                    // This is a placeholder for stopping generation.
+                    // Actual API cancellation would require a more complex setup (e.g., abort controller).
+                    // For this Flask setup, it simply prevents sending new messages.
+                    isGenerating = false; // Stop the flag
+                    sendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    sendBtn.classList.remove('stop-icon');
+                    showInfoModal('AI response generation stopped (UI-side only).');
+                    // In a real-world scenario, you'd send an abort signal to the backend.
+                }
+            });
+
+            const sendMessage = async () => {
+                const messageText = messageInput.value.trim();
+                if (!messageText) return;
+
+                messageInput.value = ''; // Clear input immediately
+                messageInput.style.height = 'auto'; // Reset textarea height
+
+                addMessageToChat('user', messageText);
+                activeMessages.push({ role: "user", content: messageText }); // Add to current chat history
+
+                isGenerating = true;
+                sendBtn.innerHTML = '<i class="fas fa-square"></i>';
+                sendBtn.classList.add('stop-icon');
+
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: messageText,
+                            chat_id: currentChatId === 'new-chat-placeholder' ? null : currentChatId,
+                            history: activeMessages // Send full history for context
+                        }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        addMessageToChat('ai', data.response);
+                        activeMessages.push({ role: "assistant", content: data.response });
+
+                        // Update currentChatId if it was a new chat and now has a real ID
+                        if (data.chat_id && currentChatId === 'new-chat-placeholder') {
+                            currentChatId = data.chat_id;
+                            await fetchChatHistory(); // Re-fetch history to update sidebar with new chat title
+                        } else if (data.new_title) {
+                            // If title was updated (first message for existing chat where it was 'New Chat'), refresh sidebar
+                            await fetchChatHistory();
+                        }
+                    } else {
+                        const errorData = await response.json();
+                        addMessageToChat('ai', `Error: ${errorData.error || 'Something went wrong.'} 😔`);
+                        console.error('API Error:', errorData);
+                        showInfoModal(`Error: ${errorData.error || 'Something went wrong.'} 😔`);
+                    }
+                } catch (error) {
+                    addMessageToChat('ai', 'Network error or server unreachable. Please try again. 😟');
+                    console.error('Fetch error:', error);
+                    showInfoModal('Network error or server unreachable. Please try again. 😟');
+                } finally {
+                    isGenerating = false;
+                    sendBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    sendBtn.classList.remove('stop-icon');
+                }
+            };
+
+            // --- Mic (Speech Recognition) Functionality ---
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.continuous = false; // Listen for a single utterance
+                recognition.interimResults = true; // Get results while speaking
+                recognition.lang = 'en-US'; // Set language
+
+                let isListening = false;
+                micBtn.addEventListener('click', () => {
+                    if (!isListening) {
+                        try {
+                            recognition.start();
+                            micBtn.style.color = 'var(--primary-color)'; // Highlight mic when listening
+                            micBtn.classList.add('fa-beat'); // Add a visual effect
+                            isListening = true;
+                            showInfoModal('Listening for voice input...');
+                        } catch (e) {
+                            console.error('Speech recognition start error:', e);
+                            micBtn.style.color = 'var(--text-light-color)';
+                            micBtn.classList.remove('fa-beat');
+                            isListening = false;
+                            showInfoModal('Could not start microphone. Please ensure permissions are granted.');
+                        }
+                    } else {
+                        recognition.stop();
+                        micBtn.style.color = 'var(--text-light-color)';
+                        micBtn.classList.remove('fa-beat');
+                        isListening = false;
+                    }
+                });
+
+                recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results)
+                        .map(result => result[0])
+                        .map(result => result.transcript)
+                        .join('');
+                    messageInput.value = transcript;
+                    messageInput.style.height = 'auto'; // Re-adjust height
+                    messageInput.style.height = messageInput.scrollHeight + 'px';
+                };
+
+                recognition.onend = () => {
+                    micBtn.style.color = 'var(--text-light-color)';
+                    micBtn.classList.remove('fa-beat');
+                    isListening = false;
+                    // Automatically send message after recognition ends if there's content
+                    if (messageInput.value.trim() !== '') {
+                        sendMessage();
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    micBtn.style.color = 'var(--text-light-color)';
+                    micBtn.classList.remove('fa-beat');
+                    isListening = false;
+                    showInfoModal(`Speech recognition error: ${event.error}. Please check microphone and permissions.`);
+                };
+            } else {
+                micBtn.style.display = 'none'; // Hide mic button if not supported
+                console.warn('Web Speech API is not supported in this browser.');
+            }
+
+            // --- File Attach Functionality (Only opens file picker, no preview rendered anymore) ---
+            fileAttachBtn.addEventListener('click', () => {
+                fileAttachInput.click(); // Programmatically click the hidden file input
+            });
+
+            fileAttachInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    // In the previous version, a preview was shown.
+                    // As per user request, the "under section" (file-preview-container) is removed.
+                    // The actual file handling (upload to server, sending with message)
+                    // would need backend implementation. For now, it just selects the file.
+                    showInfoModal(`File selected: ${file.name}. (File won't be sent to AI yet, backend integration required.)`);
+                    console.log('File selected:', file);
+                }
+            });
+
+            // --- My Profile Modal ---
+            myProfileLink.addEventListener('click', () => {
+                profileDropdown.classList.remove('show'); // Close profile dropdown
+                profileModalOverlay.classList.add('show');
+                profileModalMessage.style.display = 'none'; // Clear previous messages
+                // Fetch user details again to ensure up-to-date info
+                fetchUserDetails(); 
+            });
+
+            document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const modalId = e.target.dataset.modalId || e.target.closest('.modal-close-btn').dataset.modalId;
+                    document.getElementById(modalId).classList.remove('show');
+                });
+            });
+
+            // Close modal if clicked outside
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+
+            // Password Strength for Profile Modal
+            modalPasswordInput.addEventListener('input', () => {
+                const password = modalPasswordInput.value;
+                const strength = checkPasswordStrength(password);
+
+                strengthBarModal.classList.remove('weak', 'medium', 'strong');
+                if (password.length === 0) {
+                    strengthBarModal.style.width = '0%';
+                } else if (strength === 'weak') {
+                    strengthBarModal.classList.add('weak');
+                } else if (strength === 'medium') {
+                    strengthBarModal.classList.add('medium');
+                } else if (strength === 'strong') {
+                    strengthBarModal.classList.add('strong');
+                }
+            });
+
+            function checkPasswordStrength(password) {
+                let score = 0;
+                if (password.length >= 8) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[a-z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[!@#$%^&*()]/.test(password)) score++;
+                
+                if (score <= 2) return 'weak';
+                if (score <= 4) return 'medium';
+                return 'strong';
+            }
+
+
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newUsername = modalUsernameInput.value.trim();
+                const newEmail = modalEmailInput.value.trim();
+                const newPassword = modalPasswordInput.value; // Don't trim password
+
+                profileModalMessage.style.display = 'none';
+                profileModalMessage.classList.remove('success', 'error');
+
+                const payload = {
+                    username: newUsername,
+                    email: newEmail,
+                };
+                if (newPassword) {
+                    // Only send password if it's not empty, allowing user to keep current
+                    payload.password = newPassword;
+                }
+
+                try {
+                    const response = await fetch('/api/user_profile/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+                    profileModalMessage.textContent = data.message || data.error;
+                    profileModalMessage.classList.add(response.ok ? 'success' : 'error');
+                    profileModalMessage.style.display = 'block';
+
+                    if (response.ok) {
+                        // Update avatar and email display if successful
+                        avatarLetter.textContent = newUsername.charAt(0).toUpperCase();
+                        profileEmailDisplay.textContent = newEmail;
+                        modalPasswordInput.value = ''; // Clear password field after successful update
+                        strengthBarModal.style.width = '0%'; // Reset strength bar
+                    }
+                } catch (error) {
+                    profileModalMessage.textContent = 'An error occurred while updating profile.';
+                    profileModalMessage.classList.add('error');
+                    profileModalMessage.style.display = 'block';
+                    console.error('Profile update error:', error);
+                }
+            });
+
+            // --- Rename Chat Modal ---
+            let chatToRenameId = null;
+
+            const openRenameModal = (chatId, currentTitle) => {
+                chatToRenameId = chatId;
+                modalChatTitleInput.value = currentTitle;
+                renameModalMessage.style.display = 'none';
+                renameModalOverlay.classList.add('show');
+            };
+
+            renameForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newTitle = modalChatTitleInput.value.trim();
+                if (!chatToRenameId || !newTitle) {
+                    renameModalMessage.textContent = 'New title is required.';
+                    renameModalMessage.classList.add('error');
+                    renameModalMessage.style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/chat_history/rename', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: chatToRenameId,
+                            new_title: newTitle,
+                        }),
+                    });
+
+                    const data = await response.json();
+                    renameModalMessage.textContent = data.message || data.error;
+                    renameModalMessage.classList.add(response.ok ? 'success' : 'error');
+                    renameModalMessage.style.display = 'block';
+
+                    if (response.ok) {
+                        await fetchChatHistory(); // Refresh sidebar history
+                        setTimeout(() => renameModalOverlay.classList.remove('show'), 1500); // Close after delay
+                    }
+                } catch (error) {
+                    renameModalMessage.textContent = 'An error occurred while renaming chat.';
+                    renameModalMessage.classList.add('error');
+                    renameModalMessage.style.display = 'block';
+                    console.error('Rename chat error:', error);
+                }
+            });
+
+            // --- Delete Chat ---
+            const deleteChat = async (chatId) => {
+                try {
+                    const response = await fetch('/api/chat_history/delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ chat_id: chatId }),
+                    });
+
+                    if (response.ok) {
+                        showInfoModal('Chat deleted successfully!');
+                        // If the deleted chat was the currently active one, start a new chat
+                        if (currentChatId === chatId) {
+                            startNewChat();
+                        }
+                        await fetchChatHistory(); // Refresh sidebar history
+                    } else {
+                        const errorData = await response.json();
+                        showInfoModal(`Failed to delete chat: ${errorData.error}`);
+                        console.error('Delete chat error:', errorData);
+                    }
+                } catch (error) {
+                    showInfoModal('An error occurred while deleting chat.');
+                    console.error('Delete chat fetch error:', error);
+                }
+            };
+
+            // --- Custom Info/Confirmation Modals (replacing alert/confirm) ---
+            const showInfoModal = (message, callback = null) => {
+                // This will use the existing profile modal overlay for simplicity,
+                // or you could create a dedicated info modal.
+                // For now, let's reuse the profile modal and just show a message.
+                const tempModalOverlay = document.createElement('div');
+                tempModalOverlay.className = 'modal-overlay';
+                tempModalOverlay.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Nexa AI</h3>
+                            <button class="modal-close-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                        <p style="text-align: center; margin-bottom: 1.5rem; font-size: 1.1rem;">${message}</p>
+                        <button class="btn-primary" style="width: 100%;" id="modal-ok-btn">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(tempModalOverlay);
+                tempModalOverlay.classList.add('show');
+
+                const closeModal = () => {
+                    tempModalOverlay.classList.remove('show');
+                    setTimeout(() => tempModalOverlay.remove(), 300); // Remove after transition
+                    if (callback) callback();
+                };
+
+                tempModalOverlay.querySelector('.modal-close-btn').addEventListener('click', closeModal);
+                tempModalOverlay.querySelector('#modal-ok-btn').addEventListener('click', closeModal);
+                tempModalOverlay.addEventListener('click', (e) => {
+                    if (e.target === tempModalOverlay) closeModal();
+                });
+            };
+
+            const showConfirmationModal = (message, onConfirm, onCancel = null) => {
+                const confModalOverlay = document.createElement('div');
+                confModalOverlay.className = 'modal-overlay';
+                confModalOverlay.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Confirm Action</h3>
+                            <button class="modal-close-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                        <p style="text-align: center; margin-bottom: 1.5rem; font-size: 1.1rem;">${message}</p>
+                        <div style="display: flex; justify-content: space-around; gap: 1rem;">
+                            <button class="btn-primary" style="flex: 1; background-color: var(--error-color);" id="conf-confirm-btn">Confirm</button>
+                            <button class="btn-primary" style="flex: 1; background-color: var(--text-light-color);" id="conf-cancel-btn">Cancel</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(confModalOverlay);
+                confModalOverlay.classList.add('show');
+
+                const closeConfModal = () => {
+                    confModalOverlay.classList.remove('show');
+                    setTimeout(() => confModalOverlay.remove(), 300);
+                };
+
+                confModalOverlay.querySelector('#conf-confirm-btn').addEventListener('click', () => {
+                    onConfirm();
+                    closeConfModal();
+                });
+                confModalOverlay.querySelector('#conf-cancel-btn').addEventListener('click', () => {
+                    if (onCancel) onCancel();
+                    closeConfModal();
+                });
+                confModalOverlay.querySelector('.modal-close-btn').addEventListener('click', closeConfModal);
+                confModalOverlay.addEventListener('click', (e) => {
+                    if (e.target === confModalOverlay) closeModal();
+                });
+            };
+
+
+            // --- Chat Search Functionality ---
+            chatSearchInput.addEventListener('input', () => {
+                const searchTerm = chatSearchInput.value.toLowerCase();
+                document.querySelectorAll('.chat-history-item').forEach(item => {
+                    const title = item.querySelector('.chat-title').textContent.toLowerCase();
+                    if (item.dataset.chatId === 'new-chat-placeholder' || title.includes(searchTerm)) {
+                        item.style.display = 'flex'; // Show item
+                    } else {
+                        item.style.display = 'none'; // Hide item
+                    }
+                });
+            });
+
+
+            // --- Logout ---
+            logoutLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    const response = await fetch('/logout', { method: 'GET' });
+                    if (response.ok) {
+                        window.location.href = '/login'; // Redirect to login page
+                    } else {
+                        showInfoModal('Logout failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    showInfoModal('Network error during logout. Please try again.');
+                }
+            });
+
+            // --- Initial Load ---
+            fetchUserDetails();
+            fetchChatHistory();
+
+            // Handle sidebar visibility on initial load for mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('hidden'); // Hide sidebar by default on mobile
+            }
+            updateSidebarVisibility(); // Call once to set initial button states
+        });
+    </script>
+</body>
+</html>
